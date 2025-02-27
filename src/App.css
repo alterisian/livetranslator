@@ -1,0 +1,21 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.App-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: #282c34;
+}
+
+@media (max-width: 768px) {
+  .App {
+    padding: 10px;
+  }
+} 

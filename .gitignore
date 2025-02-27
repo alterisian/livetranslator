@@ -5,3 +5,4 @@ text/*
 # Allow the directories themselves
 !audio/
 !text/
+node_modules
