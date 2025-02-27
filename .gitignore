@@ -5,3 +5,5 @@ text/*
 # Allow the directories themselves
 !audio/
 !text/
+
+.env
