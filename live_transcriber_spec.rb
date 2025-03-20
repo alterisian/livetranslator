@@ -16,7 +16,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#start' do
-    let!(:stream_url) { 'https://example.com/live_stream.m3u8' }
+    let!(:stream_url) { 'https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833' }
     let!(:subject) { LiveTranscriber.new(stream_url) }
 
     it 'starts transcription from the given stream URL' do
@@ -32,7 +32,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#stop' do
-    let!(:subject) { LiveTranscriber.new('https://example.com/live_stream.m3u8') }
+    let!(:subject) { LiveTranscriber.new('https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833') }
 
     it 'sets running flag to false' do
       expect(subject.running?).to be(false)
@@ -42,7 +42,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#on_transcription' do
-    let!(:subject) { LiveTranscriber.new('https://example.com/live_stream.m3u8') }
+    let!(:subject) { LiveTranscriber.new('https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833') }
     let!(&block) { ->(result) {} }
 
     it 'sets callback function' do
@@ -59,7 +59,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#process_stream' do
-    let!(:subject) { LiveTranscriber.new('https://example.com/live_stream.m3u8') }
+    let!(:subject) { LiveTranscriber.new('https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833') }
 
     it 'loops through playlist items' do
       allow(subject).to receive(:segment_url).twice
@@ -144,7 +144,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#running?' do
-    let!(:subject) { LiveTranscriber.new('https://example.com/live_stream.m3u8') }
+    let!(:subject) { LiveTranscriber.new('https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833') }
 
     it 'returns false when stopped' do
       subject.stop
@@ -158,7 +158,7 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#transcriptions' do
-    let!(:subject) { LiveTranscriber.new('https://example.com/live_stream.m3u8') }
+    let!(:subject) { LiveTranscriber.new('https://s32.myradiostream.com/:19618/listen.mp3?nocache=1742481833') }
 
     it 'stores transcriptions in an array' do
       allow(subject).to receive(:on_transcription)
