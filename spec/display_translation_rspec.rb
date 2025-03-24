@@ -34,4 +34,12 @@ RSpec.describe DisplayTranslation do
     # create the file
   end
 
+  it 'can convert a timestamp to Time' do
+    filename = 'audio_segment_1741691051_EN.txt'
+    decoded_time = DisplayTranslation.new.decode_time_from_filename(filename)
+    expect(decoded_time.hour).to eq(12)
+    expect(decoded_time.min).to eq(4)
+    expect(decoded_time.sec).to eq(11)
+  end
+
 end

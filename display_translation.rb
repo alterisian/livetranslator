@@ -1,5 +1,6 @@
 require 'logger'
 require 'listen'
+require 'time'
 
 class DisplayTranslation
     def initialize
@@ -37,11 +38,15 @@ class DisplayTranslation
         # we could use a file watcher
         # callback.call("something")
     end
-    
+
+    def decode_time_from_filename(filename)      
+      timestamp_str = filename.split('_')[2]      
+      Time.at(timestamp_str.to_i)
+    end
+  
 end
 
 if __FILE__ == $PROGRAM_NAME
-    # Display Translation
-    display = DisplayTranslation.new
-    display.display_live_text
-  end
+  display = DisplayTranslation.new
+  display.display_live_text
+end
