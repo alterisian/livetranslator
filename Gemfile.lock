@@ -46,9 +46,12 @@ GEM
       ruby2_keywords (~> 0.0.1)
     net-http (0.6.0)
       uri
+    nio4r (2.7.4)
     pry (0.15.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
+    puma (6.6.0)
+      nio4r (~> 2.0)
     rack (3.1.12)
     rack-protection (4.1.1)
       base64 (>= 0.1.0)
@@ -108,6 +111,7 @@ DEPENDENCIES
   logger
   m3u8 (~> 0.6.9)
   pry
+  puma
   rspec
   ruby-openai
   sinatra
