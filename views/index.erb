@@ -15,19 +15,53 @@
     </style>
 </head>
 <body class="p-6">
-    <h1 id="headline" class="text-3xl font-bold">Hello, World! Boquercom speaking...</h1>    
-
     <div id="small-text" class="hidden fixed top-2 left-2 text-[8px] text-boquer-blue">Boquercom</div>
+    <h1 id="headline" class="text-3xl font-bold">Hello World! Boquercom speaking...</h1>        
 
-    <p class="mt-4 text-lg">
-      <%= @en_text %>
+    <p id="result-container" class="mt-4 text-lg">
+      <%= @data[:en_text] %>
     </p>
+
+    <!-- New div for error messages -->
+    <div id="error-container" class="mt-4 text-lg text-red-500"></div>
 
     <script>
         setTimeout(() => {
             document.getElementById('headline').style.display = 'none';
             document.getElementById('small-text').classList.remove('hidden');
         }, 2000);
+
+        // Function to fetch data from remote endpoint and update div
+        function fetchDataAndUpdateDiv() {
+          const targetDiv = document.getElementById('result-container');
+          const errorDiv = document.getElementById('error-container'); // Reference to error div
+          errorDiv.textContent = ''; // Clear previous error messages
+          const apiUrl = '/update';
+                    
+          fetch(apiUrl)
+            .then(response => {
+              // Check if the response is ok (status code 200-299)
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              return response.json(); // Parse JSON response
+            })
+            .then(data => {
+              // Update the div with the response data
+              targetDiv.textContent = data.en_text || JSON.stringify(data);
+            })
+            .catch(error => {
+              // Handle any errors
+              errorDiv.textContent = `Error: ${error.message}`; // Display error in the error div
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                fetchDataAndUpdateDiv(); // Initial fetch
+                setInterval(fetchDataAndUpdateDiv, 2000); // Fetch every 2 seconds
+            }, 2000);
+        });
     </script>
 </body>
 </html>
