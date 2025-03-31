@@ -70,6 +70,16 @@ Heroku will need to have a Gemfile.lock, so ensure that is committed, after runn
 
 bundle install
 
+A Procfile should exist to run on heroku - it should run the sinatra app:
+
+   web: ruby app.rb -o 0.0.0.0 -p $PORT
+
+A config.ru file should exist referencing the same app file:
+
+require './app'
+run Sinatra::Application
+
+
 Creating The Heroku Instance
 
 heroku create boquercom

@@ -3,9 +3,9 @@ require 'sinatra'
 
 get '/' do
   # Changes to the text here require a restart of the Sinatra server (puma)
-  'Hello, World! Boquercom speaking...<br/>
-  <br/>To work in product, it is necessary to have a multidisciplinary team <br/> with various profiles, which ensures that new functionalities <br/> are delivered with each development.
-  '
+  @en_text = 'To work in product, it is necessary to have a multidisciplinary team with various profiles, which ensures that new functionalities are delivered with each development.'
+  
+  erb :index
 end
 
 # Question: What end points are needed?
