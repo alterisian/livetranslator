@@ -8,12 +8,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Lexend', sans-serif; }
+        .text-boquer-blue {
+          --tw-text-opacity: 1;
+          color: rgb(0 102 255 / var(--tw-text-opacity));
+        }
     </style>
 </head>
 <body class="p-6">
-    <h1 class="text-3xl font-bold">Hello, World! Boquercom speaking...</h1>    
+    <h1 id="headline" class="text-3xl font-bold">Hello, World! Boquercom speaking...</h1>    
+
+    <div id="small-text" class="hidden fixed top-2 left-2 text-[8px] text-boquer-blue">Boquercom</div>
+
     <p class="mt-4 text-lg">
       <%= @en_text %>
     </p>
+
+    <script>
+        setTimeout(() => {
+            document.getElementById('headline').style.display = 'none';
+            document.getElementById('small-text').classList.remove('hidden');
+        }, 2000);
+    </script>
 </body>
 </html>
