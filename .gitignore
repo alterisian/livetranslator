@@ -12,3 +12,12 @@ live_text/*
 !text/
 !live_audio/README
 !live_text/README
+
+# Infrastructure files
+.terraform
+.terraform-version
+.terraform.lock.hcl
+# Ignore all .tfstate files
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
