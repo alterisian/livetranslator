@@ -20,9 +20,10 @@ COPY . .
 RUN mkdir -p audio transcripts
 
 # Set environment variables
+ENV APP_ENV=production
 ENV AUDIO_DIR=/app/audio
 ENV TRANSCRIPT_DIR=/app/transcripts
 
 # Command to run the application
-CMD ["ruby", "spanish_transcriber.rb"]
+CMD ["/bin/sh", "-c" , "ruby app.rb"]
 
