@@ -1,0 +1,13 @@
+<div id="stream_created" class="mt-10 px-4">
+  <h1 id="headline" class="text-3xl font-bold">Translating Stream Initialised</h1>
+  <p class="mt-4 text-lg">
+    Event ID: <%= @event_id %>
+    <br/><a href="/<%= @event_id %>" target="_blank" class="text-blue-500">See live translation</a>
+    <br/>See full transcription.
+    <br/>
+      <form action="/<%= @event_id %>" method="post" data-method="delete">
+        <button type="submit" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Stop Translation</button>
+      </form>
+    <br/>Donate to Boquercom.
+  </p>
+</div>

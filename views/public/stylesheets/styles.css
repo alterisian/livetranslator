@@ -1,0 +1,5 @@
+body { font-family: 'Lexend', sans-serif; }
+.text-boquer-blue {
+  --tw-text-opacity: 1;
+  color: rgb(0 102 255 / var(--tw-text-opacity));
+}

@@ -1,0 +1,28 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputText = document.querySelector('input[name="input_text"]');
+        const defaultValue = 'https://rtvelivesrc2.rtve.es/live-origin/24h-hls/bitrate_3.m3u8';
+
+        inputText.addEventListener('focus', function() {
+            if (inputText.value === defaultValue) {
+                inputText.value = '';
+            }
+        });
+    });    
+</script>
+
+<h1 id="headline" class="text-3xl font-bold mt-8">Hello World! Boquercom speaking...</h1>  <p>Enter your stream url below</p>
+  <div id="form-container" class="mt-4 text-lg">
+    <form action='/create' method='post' class="flex flex-col space-y-4">
+      <input type='text' name='input_text' value='https://rtvelivesrc2.rtve.es/live-origin/24h-hls/bitrate_3.m3u8' class="border border-gray-300 p-2 rounded" placeholder="Enter text">
+      <input type='submit' class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600" value="Submit">
+    </form>
+  </div>
+
+  <div id="error-container" class="mt-4 text-lg text-red-500"></div>
+
+<script>
+  $(document).ready(function() {
+    $('#small-text').hide();
+  });
+</script>
