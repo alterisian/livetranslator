@@ -31,6 +31,7 @@ GEM
     logger (1.7.0)
     m3u8 (0.6.9)
     method_source (1.1.0)
+    multi_json (1.15.0)
     multipart-post (2.4.1)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
@@ -80,6 +81,12 @@ GEM
       rack-protection (= 4.1.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
+    sinatra-contrib (4.1.1)
+      multi_json (>= 0.0.2)
+      mustermann (~> 3.0)
+      rack-protection (= 4.1.1)
+      sinatra (= 4.1.1)
+      tilt (~> 2.0)
     tilt (2.6.0)
     uri (1.0.3)
 
@@ -105,6 +112,7 @@ DEPENDENCIES
   rspec
   ruby-openai
   sinatra
+  sinatra-contrib
 
 RUBY VERSION
    ruby 3.2.2p53

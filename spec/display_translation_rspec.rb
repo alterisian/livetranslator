@@ -11,8 +11,7 @@ RSpec.describe DisplayTranslation do
     
     display = described_class.new
     livetext = display.display_live_text
-    
-    # continue from HERE
+        
     expect(livetext).not_to be_empty
     expect(livetext).to eq('This is the first time we have seen the father since he was admitted last February 14th.')
     
@@ -22,16 +21,16 @@ RSpec.describe DisplayTranslation do
         file.write("Some sentence in English")
     end
 
-    # define a spy
-    
     callback = ->(result) { result } 
-
     expect(callback).to receive(:call).with("Some sentence in English")
     
     display.follow_live_text(&callback)
+  end
 
-    # maybe sleep
-    # create the file
+  it 'should not display please provide spanish text' do
+    do_not_display = "You didn't provide any Spanish text. Please provide the text you want translated."
+    pending
+    expect false.to be(true)
   end
 
 end

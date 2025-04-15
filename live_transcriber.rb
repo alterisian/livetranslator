@@ -2,20 +2,22 @@
 # run: start_rtve_translation.rb
 
 require 'net/http'
+require 'uri'
+
+require 'json'
+require 'fileutils'
+require 'logger'
+require 'time'
+
 require 'm3u8'
 require 'openai'
-require 'uri'
-require 'logger'
-require 'fileutils'
-require 'json'
-require 'time'
 
 require './spanish_transcriber'
 
 class LiveTranscriber  
 
-  def initialize(stream_url)
-    @logger = Logger.new(STDOUT)
+  def initialize(stream_url, event_id: 'live_')
+    @logger = Logger.new(STDOUT) # TODO - Change to file - Can we do this on a project basis.
     @logger.level = Logger::INFO
 
     @openapikey = ENV["OPENAI_API_KEY"]
@@ -29,6 +31,11 @@ class LiveTranscriber
     @stream_url = stream_url
     if @stream_url
       @logger.info "Stream URL read: #{@stream_url}"
+    end
+
+    @event_id = event_id
+    if @event_id
+      @logger.info("Event ID read: #{@event_id}")
     end
 
     @running = false
@@ -152,8 +159,9 @@ class LiveTranscriber
   end
 
   def process_chunk(audio_data, segment_url)
-    FileUtils.mkdir_p('live_audio') unless Dir.exist?('live_audio')
-    temp_file = File.open(File.join('live_audio', "audio_segment_#{Time.now.to_i}.aac"), 'wb')
+    event_audio_path_file="events/#{@event_id}_audio"
+    FileUtils.mkdir_p(event_audio_path_file) unless Dir.exist?(event_audio_path_file)
+    temp_file = File.open(File.join(event_audio_path_file, "audio_segment_#{Time.now.to_i}.aac"), 'wb')
 
     begin
       temp_file.binmode
@@ -242,10 +250,10 @@ class LiveTranscriber
   end
 
   def transcribe_audio(audio_file_path)
-    @logger.info "Transcribe File: #{audio_file_path}"  
-    transcription = SpanishTranscriber.new(project_name: "live").transcribe_pending_files
+    @logger.info "Transcribe File: #{audio_file_path}"
+    transcription = SpanishTranscriber.new(event_name: @event_id).transcribe_pending_files
     @logger.info "Transcription: #{transcription}"
- 
+
     transcription
   end
 

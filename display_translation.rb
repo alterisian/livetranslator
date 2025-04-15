@@ -1,11 +1,25 @@
 require 'logger'
 require 'listen'
+require 'securerandom'
+require 'fileutils'
 
 class DisplayTranslation
     def initialize
         @logger = Logger.new(STDOUT)
         @logger.level = Logger::DEBUG
         @live_text_dir = 'live_text'
+    end
+
+    def generate_event_id(length=6)
+        SecureRandom.hex(length / 2)
+    end
+
+    def create_event_directory
+      event_id = generate_event_id
+      events_base_dir = "events"
+      Dir.mkdir(File.join(events_base_dir, event_id)) unless Dir.exist?(File.join(events_base_dir, event_id))
+
+      event_id
     end
 
     def display_live_text

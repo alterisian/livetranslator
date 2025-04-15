@@ -10,13 +10,14 @@ require './transcribers/openai'
 class SpanishTranscriber
   SUPPORTED_AUDIO_FORMATS = %w[mp3 ogg wav mp4 aac].freeze
 
-  def initialize(project_name: '', translate_audio: true)
-    @logger = Logger.new(STDOUT)
+  def initialize(event_name: '', translate_audio: true)
+    @logger = Logger.new(STDOUT) # TODO - Change to file - Can we do this on a project basis.
     @logger.level = Logger::DEBUG
-    @project_name = project_name.empty? ? '' : "#{project_name}_"
-    @audio_dir = "#{@project_name}audio"
-    @text_dir = "#{@project_name}text"
+    @event_name = event_name.empty? ? '' : "#{event_name}_"
+    @audio_dir = "events/#{@event_name}audio"
+    @text_dir = "events/#{@event_name}text"    
     @translate_audio = translate_audio
+
     @openapikey = ENV['OPENAI_API_KEY']
     if @openapikey
       @logger.info 'OpenAI API key set'

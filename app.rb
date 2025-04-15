@@ -1,11 +1,23 @@
-# app.rb
+# This is a sinatra application: https://sinatrarb.com/intro.html
+# Question: Do we just display the translation? Or original transcription too? Is it a complication to do both i.e. reduce usability? How do we test that? 2 events? 1 with/1 without.
+
 require 'sinatra'
+require 'sinatra/reloader' if development?
 require 'json'
-require './display_translation'
 require 'logger'
 
-# Initialize the logger
-logger = Logger.new(STDOUT)
+require './display_translation'
+
+use Rack::MethodOverride      # Allows DELETE and PUT to work
+
+configure :development do
+  register Sinatra::Reloader
+end
+
+set :layout, :principal_layout
+set :method_override, true      # Allows DELETE and PUT to work
+
+logger = Logger.new('log/app.log') # Log to a specific file, rather than STDOUT
 logger.level = Logger::INFO
 
 before do
@@ -16,8 +28,6 @@ before do
 end
 
 get '/' do  
-  # Changes to the text here require a restart of the Sinatra server (puma)  
-  
   @data = {
     en_text: 'To work in product, it is necessary to have a multidisciplinary team with various profiles, which ensures that new functionalities are delivered with each development.'
   }  
@@ -41,29 +51,30 @@ get '/update' do
   data.to_json
 end
 
-# get '/start_rtve' do
-  
-# end 
+# GET /new - Displays a form to capture a new stream URL for translation
+get '/new' do
+  erb :new, layout: :principal_layout
+end
 
-# get '/stop_rtve' do
-  
-# end 
+# POST /create - Called from form in new, and displays event translation page and controls
+post '/create' do
+  @event_id = DisplayTranslation.new.create_event_directory
+  # TODO - explore redirect to /events/id to display is index
+  erb :create, layout: :principal_layout
+end
 
-# get '/new_stream' do
-#   # displays form with cature of new stream and 'project' code of where it is dislayed
-# end
+# GET /event_id - shows the live translation for this event.
+get '/:event_id' do
+  @event_id = params[:event_id]
+  logger.info("Displaying live translation for event ID: #{@event_id}")
+  erb :show, layout: :principal_layout
+end
 
-# get '/stop_stream' do
-#   # param is project name i.e. directory
-# end
-
-# Question: What end points are needed?
-# Ideas:
-# /start with stream_url - this could be the root. Any additional options? i.e. 4 seconds/EN and/or ES output?
-# /stop with stream_id_or_url or just stream_url
-# /display/stream_id_or_url - is it possible without a db? Can we avoid a db initially?
-# /transcrition/stream_id_or_url - gives all the text for the recent stream transcription/translation
-
-# Question: What is the most basic needed vs actually nice. i.e. we don't NEED a great font, but will make it more readable.
-# Question: Do we just display the translation? Or original transcription too? Is it a complication to do both i.e. reduce usability? How do we test that? 2 events? 1 with/1 without.
-
+# DELETE /event_id - stops the live translation for the event
+# TODO - IM: Not currently detected from the from in create. 
+delete '/:event_id' do
+  @event_id = params[:event_id]
+  # stop the translation for the given event_id
+  logger.info("Stopping translation for event ID: #{@event_id}")  
+  status 204 # No Content
+end

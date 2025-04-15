@@ -1,5 +1,9 @@
 .envrc
 
+# Ignore everything inside the log and events directories
+events/*
+log/*
+
 # Ignore everything inside the audio and text directories
 audio/*
 text/*
