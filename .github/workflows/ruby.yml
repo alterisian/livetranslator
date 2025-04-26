@@ -4,11 +4,13 @@
 # documentation.
 # This workflow will download a prebuilt Ruby version, install dependencies and run tests with Rake
 # For more information see: https://github.com/marketplace/actions/setup-ruby-jruby-and-truffleruby
-name: Ruby CI
+name: Ruby project CI jobs
 
 on:
+  # Always run post-merge on "main" branch
   push:
     branches: [ "main" ]
+  # And for Every PR against "main"
   pull_request:
     branches: [ "main" ]
 
@@ -16,8 +18,23 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    # To automatically get bug fixes and new Ruby versions for ruby/setup-ruby,
+    # change this to (see https://github.com/ruby/setup-ruby#versioning):
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      env:
+        BUNDLER_WITH: development
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+    - name: Run Rubocop validations
+      run: bundle exec rubocop
 
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,7 +51,6 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-    - name: Run Rubocop validations
-      run: bundle exec rubocop || true
     - name: Run RSpec tests
-      run: bundle exec rspec
+      # FIXME: remove file patterns once PR #7 is merged
+      run: bundle exec rspec spec/*_rspec.rb spec/**/*_rspec.rb
