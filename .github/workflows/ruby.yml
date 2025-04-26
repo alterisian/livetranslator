@@ -4,7 +4,7 @@
 # documentation.
 # This workflow will download a prebuilt Ruby version, install dependencies and run tests with Rake
 # For more information see: https://github.com/marketplace/actions/setup-ruby-jruby-and-truffleruby
-name: Ruby project CI jobs
+name: Ruby CI
 
 on:
   # Always run post-merge on "main" branch
@@ -31,8 +31,19 @@ jobs:
       with:
         ruby-version: '3.2'
         bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+    # Checks to see if any files in the PR match one of the listed file types.
+    # We can use this filter to decide whether or not to run linters or tests.
+    # This will return true if there's a markdown file that was changed
+    # in the PR.
+    - uses: dorny/paths-filter@v2.2.1
+      id: filter
+      with:
+        filters: |
+          rb:
+            - '**/*.rb'
     - name: Run Rubocop validations
-      run: bundle exec rubocop
+      if: ${{ steps.filter.outputs.rb == 'true' }}
+      run: bundle exec rubocop `git diff --name-only --diff-filter=ACM origin/main | grep -E '\.rb$'`
 
   test:
     runs-on: ubuntu-latest
