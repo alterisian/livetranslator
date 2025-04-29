@@ -1,10 +1,11 @@
+.bundle
 .env
 .git
 .gitignore
-audio/*
-transcripts/*
+audio
+transcripts
+live_audio
+live_text
 *.mp3
 *.mp4
 *.wav
-Dockerfile
-docker-compose.yml

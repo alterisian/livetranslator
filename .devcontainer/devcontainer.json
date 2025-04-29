@@ -1,0 +1,43 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-docker-compose
+{
+	"name": "Boquercom Dev Stack",
+	"build": {
+		"context": "..",
+		"dockerfile": "../Dockerfile",
+		"args": {
+		  "BUILD_FROM": "mcr.microsoft.com/devcontainers/ruby:3.2"
+		}
+	},
+
+	// Default path that devcontainer.json supporting services / tools should open when connecting to the container.
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+	"workspaceFolder": "/workspace",
+
+	// Uncomment the next line to run commands after the container is created.
+	"postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [4567]
+
+	// Uncomment the next line if you want to keep your containers running after VS Code shuts down.
+	// "shutdownAction": "none",
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vsliveshare.vsliveshare",
+				"rubocop.vscode-rubocop"
+			]
+		}
+	}
+
+	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "devcontainer"
+}
