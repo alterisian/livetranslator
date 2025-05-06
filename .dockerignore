@@ -3,6 +3,7 @@
 .gitignore
 audio/*
 transcripts/*
+infra/*
 *.mp3
 *.mp4
 *.wav
