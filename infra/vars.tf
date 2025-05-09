@@ -23,21 +23,9 @@ variable "environment" {
 ## AWS credentials
 ########################################################################################################################
 
-variable "aws_access_key_id" {
-  description = "AWS console access key"
-  type        = string
-  default     = ""
-}
-
-variable "aws_secret_access_key" {
-  description = "AWS console secret access key"
-  type        = string
-  default     = ""
-}
-
 variable "region" {
   description = "AWS region"
-  default     = "eu-west-1"
+  default     = "eu-south-2"
   type        = string
 }
 
@@ -89,7 +77,29 @@ variable "cpu_units" {
 
 variable "memory" {
   description = "Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)"
-  default     = 512
+  default     = 128
+  type        = number
+}
+
+
+########################################################################################################################
+## EC2 + Autoscaling variables
+########################################################################################################################
+variable "instance_type" {
+  description = "EC2 instance type"
+  default     = "t3.micro"
+  type        = string
+}
+
+variable "iam_role_name" {
+  description = "IAM role name for EC2 instance"
+  default     = "ecs_instance_role"
+  type        = string
+}
+
+variable "host_port" {
+  description = "Public port of the EC2 instance"
+  default     = 4567
   type        = number
 }
 
@@ -104,7 +114,6 @@ variable "retention_in_days" {
   type        = number
 }
 
-
 ########################################################################################################################
 ## ECR
 ########################################################################################################################
@@ -115,8 +124,9 @@ variable "ecs_repository_url" {
   default       = "jaysphoto/livetranslator"
 }
 
+
 variable "ecs_image_tag" {
   description   = "Docker image tag to pull from repository"
   type          = string
-  default       = "sinatra"
+  default       = "latest"
 }
