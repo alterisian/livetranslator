@@ -3,43 +3,76 @@ require_relative '../spanish_transcriber'
 
 RSpec.describe SpanishTranscriber do
   let(:project_name) { 'test' }
-  let(:transcriber) { described_class.new(project_name: project_name) }
   let(:audio_dir) { "#{project_name}_audio" }
   let(:text_dir) { "#{project_name}_text" }
-  let(:mp4_file) { File.join(audio_dir, 'test.mp4') }
-  let(:mp3_file) { File.join(audio_dir, 'test.mp3') }
-  let(:client_double) { instance_double(TranscriberOpenAI) }
-  let(:mock_response) { { 'text' => 'Transcribed text' } }
-  let(:mock_translated_text) { 'Translated text' }
+  let(:openai_stub) { instance_double(TranscriberOpenAI) }
+  let(:logger) { Logger.new($stdout) }
 
-  before do
-    FileUtils.mkdir_p(audio_dir)
-    FileUtils.mkdir_p(text_dir)
-    File.write(mp4_file, 'fake mp4 data')
+  describe '#initialize' do
+    before do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(nil)
+    end
 
-    allow(TranscriberOpenAI).to receive(:new).and_return(client_double)
-    allow(client_double).to receive(:transcribe_audio).and_return(mock_response)
-    allow(client_double).to receive(:translate_text).and_return(mock_translated_text)
+    it 'requires a logger object' do
+      expect { described_class.new }.to raise_error(TranscriberError, 'Provide a valid Logger instance: nil')
+    end
+
+    it 'raises an exception if the OpenAI API key is not set' do
+      expect { described_class.new(logger: logger) }.to raise_error(
+        TranscriberError,
+        'Please place your OpenAI API key in the environment at OPENAI_API_KEY'
+      )
+    end
   end
 
-  after do
-    FileUtils.rm_rf(audio_dir)
-    FileUtils.rm_rf(text_dir)
+  describe '#transcribe' do
+    subject(:transcriber) { described_class.new(project_name: project_name, logger: logger) }
+
+    before do
+      logger.level = Logger::INFO
+      # Instance stubs
+      allow(TranscriberOpenAI).to receive(:new).and_return(openai_stub)
+      allow(openai_stub).to receive(:transcribe_audio)
+      allow(openai_stub).to receive(:translate_text)
+      # Mock IO calls
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(openai_api_key)
+      allow(FileUtils).to receive(:mkdir_p)
+      allow(Dir).to receive(:glob).with("#{audio_dir}/*").and_return([mp4_file])
+      allow(File).to receive_messages(ctime: 10, size: 2048, write: true)
+    end
+
+    it 'creates the audio and text directories', :aggregate_failures do
+      transcriber # Instantiate, subjects are lazy-loading
+
+      expect(FileUtils).to have_received(:mkdir_p).with(audio_dir)
+      expect(FileUtils).to have_received(:mkdir_p).with(text_dir)
+    end
+
+    it 'converts MP4 to MP3 before processing' do
+      allow(Kernel).to receive(:system).and_return(true)
+
+      transcriber.transcribe_pending_files
+      expect(openai_stub).to have_received(:transcribe_audio).once.with(mp3_file)
+    end
+
+    it 'handles missing ffmpeg gracefully' do
+      allow(Kernel).to receive(:system).and_return(false) # Simulate ffmpeg failure
+
+      transcriber.transcribe_pending_files
+      expect(openai_stub).not_to have_received(:transcribe_audio)
+    end
   end
 
-  it 'converts MP4 to MP3 before processing' do
-    expect(transcriber).to receive(:convert_mp4_to_mp3).and_call_original
-    expect(transcriber).to receive(:system).and_return(true)
-    expect(transcriber).to receive(:file_properties).with(mp3_file).and_return({})
-    transcriber.transcribe_pending_files
+  # Helper methods to provide test data
+  def openai_api_key
+    'mock_openapi_ai_key'
   end
 
-  it 'handles missing ffmpeg gracefully' do
-    allow(transcriber).to receive(:system).and_return(false) # Simulate ffmpeg failure
-    File.delete(mp3_file) if File.exist?(mp3_file) # Ensure clean state
+  def mp3_file
+    File.join(audio_dir, 'test.mp3')
+  end
 
-    transcriber.transcribe_pending_files
-
-    expect(File).not_to exist(mp3_file) # MP3 should not be created
+  def mp4_file
+    File.join(audio_dir, 'test.mp4')
   end
 end
