@@ -5,31 +5,32 @@ require './display_translation'
 require 'logger'
 
 # Initialize the logger
-logger = Logger.new(STDOUT)
+logger = Logger.new($stdout)
 logger.level = Logger::INFO
 
 before do
   cache_control :no_cache
   headers \
-    "Pragma"   => "no-cache",
-    "Expires" => "0"
+    'Pragma' => 'no-cache',
+    'Expires' => '0'
 end
 
-get '/' do  
+get '/' do
   # Changes to the text here require a restart of the Sinatra server (puma).
-  
+
   @data = {
     en_text: 'To work in product, it is necessary to have a multidisciplinary team with various profiles, which ensures that new functionalities are delivered with each development.'
-  }  
+  }
+  logging.info('hello world')
   @data.to_json
 
-  logger.info("Received request for root path")
+  logger.info('Received request for root path')
   erb :index
 end
 
 get '/update' do
-  content_type :json  
-  
+  content_type :json
+
   last_translated_text = DisplayTranslation.new.display_live_text
 
   logger.info("LAST: #{last_translated_text}")
@@ -42,12 +43,12 @@ get '/update' do
 end
 
 # get '/start_rtve' do
-  
-# end 
+
+# end
 
 # get '/stop_rtve' do
-  
-# end 
+
+# end
 
 # get '/new_stream' do
 #   # displays form with cature of new stream and 'project' code of where it is dislayed
@@ -66,4 +67,3 @@ end
 
 # Question: What is the most basic needed vs actually nice. i.e. we don't NEED a great font, but will make it more readable.
 # Question: Do we just display the translation? Or original transcription too? Is it a complication to do both i.e. reduce usability? How do we test that? 2 events? 1 with/1 without.
-
