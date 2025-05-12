@@ -1,3 +1,4 @@
+.env
 .envrc
 
 # Ignore everything inside the log and events directories
@@ -7,9 +8,11 @@ log/*
 # Ignore everything inside the audio and text directories
 audio/*
 text/*
+live_audio/*
+live_text/*
 
 # Allow the directories themselves
 !audio/
 !text/
-
-live_text/audio_segment_*.txt
+!live_audio/README
+!live_text/README

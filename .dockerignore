@@ -1,0 +1,10 @@
+.env
+.git
+.gitignore
+audio/*
+transcripts/*
+*.mp3
+*.mp4
+*.wav
+Dockerfile
+docker-compose.yml

@@ -1,0 +1,26 @@
+services:
+  sinatra:
+    build: .
+    environment:
+      - APP_ENV=${APP_ENV:-'production'}
+    ports:
+      - "4567:4567"
+    volumes:
+      - ./live_audio:/app/live_audio
+      - ./live_text:/app/live_text
+  livetranslation:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./live_audio:/app/live_audio
+      - ./live_text:/app/live_text
+    command: ["ruby", "live_transcriber.rb"]
+  livestream:
+    build: nginx
+    environment:
+      - STREAM_KEY_NAME=${STREAM_KEY_NAME}
+    ports:
+      - "${RTMP_PORT:-1935}:1935"
+    volumes:
+      - ./live_audio:/opt/data/live_audio

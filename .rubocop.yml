@@ -1,0 +1,15 @@
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+
+plugins: rubocop-rspec
+
+Metrics/MethodLength:
+  CountComments: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Layout/MultilineBlockLayout:
+  Enabled: false
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*_spec.rb
