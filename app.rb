@@ -16,7 +16,7 @@ before do
 end
 
 get '/' do  
-  # Changes to the text here require a restart of the Sinatra server (puma)  
+  # Changes to the text here require a restart of the Sinatra server (puma).
   
   @data = {
     en_text: 'To work in product, it is necessary to have a multidisciplinary team with various profiles, which ensures that new functionalities are delivered with each development.'
