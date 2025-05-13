@@ -1,59 +1,42 @@
-# Usage: Run transcriber
-# transcriber = SpanishTranscriber.new
-# transcriber.transcribe_pending_files
-
 require 'fileutils'
 require 'logger'
 
-require './transcribers/openai'
+require './lib/audio_file'
+require './lib/audio_file/converter'
+require './lib/transcribers/openai'
 
+## Transcriber class, only transcribing Spanish-to-English currently
 class SpanishTranscriber
   SUPPORTED_AUDIO_FORMATS = %w[mp3 ogg wav mp4 aac].freeze
 
-  def initialize(project_name: '', translate_audio: true, logger: nil)
-    if logger.instance_of?(Logger)
-      @logger = logger
-    else
-      @logger = Logger.new(STDOUT)
-      @logger.level = Logger::DEBUG
-    end
+  def initialize(project_name: nil, translate_audio: true, logger: nil)
+    raise TranscriberError, "Provide a valid Logger instance: #{logger.inspect}" unless logger.is_a?(Logger)
 
-    @project_name = project_name.empty? ? '' : "#{project_name}_"
-    @audio_dir = "#{@project_name}audio"
-    @text_dir = "#{@project_name}text"
+    @logger = logger
     @translate_audio = translate_audio
-    @openapikey = ENV['OPENAI_API_KEY']
-    if @openapikey && !@openapikey.empty?
-      @logger.info 'OpenAI API key set'
-      @transcriber = TranscriberOpenAI.new(@logger, @openapikey)
-    else
-      raise Exception.new 'Please place your OpenAI API key in the environment at OPENAI_API_KEY'
-    end
+    @audio_file_converter = nil
 
-    FileUtils.mkdir_p(@audio_dir)
-    FileUtils.mkdir_p(@text_dir)
+    project_init name: project_name
+    transcriber
   end
 
   def transcribe_pending_files
-    @logger.info("Scanning #{@audio_dir} for audio files...")
-    audio_files = Dir.glob(File.join(@audio_dir, '*')).select { |f| valid_audio_file?(f) }
-
+    audio_files = self.audio_files
     if audio_files.empty?
       @logger.warn('No audio files found!')
-      return
     else
       @logger.info("We have #{audio_files.count} audio files to transcribe.")
-    end
-
-    audio_files.each do |file|
-      @logger.info("Starting processing #{file} audio files to transcribe.")
-      process_file(file)
+      audio_files.each { |file| process_file(file) }
     end
   end
 
+  def audio_files
+    @logger.info("Scanning #{@audio_dir} for audio files...")
+    Dir.glob(File.join(@audio_dir, '*')).select { |f| valid_audio_file?(f) }
+  end
+
   def valid_audio_file?(file)
-    ext = File.extname(file).downcase.delete_prefix('.')
-    if SUPPORTED_AUDIO_FORMATS.include?(ext)
+    if SUPPORTED_AUDIO_FORMATS.include?(AudioFile::File.new(file).format)
       true
     else
       @logger.warn("Skipping unsupported file format: #{file}")
@@ -61,104 +44,88 @@ class SpanishTranscriber
     end
   end
 
-  def process_file(file)
-    ext = File.extname(file).downcase
-    base_name = File.basename(file, ext)
-    spanish_file = File.join(@text_dir, "#{base_name}_ES.txt")
-    english_file = File.join(@text_dir, "#{base_name}_EN.txt")
+  def process_file(file_path)
+    f = AudioFile::File.new file_path
+    spanish_file = File.join(@text_dir, "#{f.base_name}_ES.txt")
+    english_file = File.join(@text_dir, "#{f.base_name}_EN.txt")
 
     if File.exist?(english_file) && File.exist?(spanish_file)
       @logger.info("Skipping #{file}, already transcribed and translated.")
-      return
+    else
+      safe_process(f, spanish_file, english_file)
     end
-
-    file = convert_mp4_to_mp3(file) if ext == '.mp4'
-    file = convert_aac_to_wav(file) if ext == '.aac'
-
-    return unless file # Skip if conversion failed
-
-    transcribe_then_translate(file, spanish_file, english_file)
   end
 
   private
 
-  def convert_mp4_to_mp3(mp4_file)
-    mp3_file = mp4_file.sub(/\.mp4$/, '.mp3')
-    return mp3_file if File.exist?(mp3_file) # Already converted
+  def project_init(name: nil)
+    @project_name = name.nil? ? '' : "#{name}_"
+    @audio_dir = "#{@project_name}audio"
+    @text_dir = "#{@project_name}text"
 
-    @logger.info("Converting #{mp4_file} to MP3...")
-    result = system("ffmpeg -i '#{mp4_file}' -q:a 3 '#{mp3_file}' 2>/dev/null")
-
-    if result
-      @logger.info("Successfully converted to #{mp3_file}")
-      mp3_file
-    else
-      @logger.error("Failed to convert #{mp4_file} to MP3. Is ffmpeg installed?")
-      nil
-    end
+    FileUtils.mkdir_p(@audio_dir)
+    FileUtils.mkdir_p(@text_dir)
   end
 
-  def convert_aac_to_wav(input_file)
-    output_file = input_file.sub(/\.aac$/, '.wav')
-    begin
-      # Check if ffmpeg is installed
-      ffmpeg_installed = system("which ffmpeg > /dev/null 2>&1")
-
-      unless ffmpeg_installed
-        raise "FFmpeg not found. Consider extending SpanishTranscriber.convert_aac_to_wav to use a web API for conversion since local ffmpeg is unavailable."
-      end
-
-      # Use ffmpeg to convert AAC to WAV
-      result = system("ffmpeg -i '#{input_file}' -acodec pcm_s16le -ar 44100 '#{output_file}' 2>/dev/null")
-
-      unless result
-        raise "FFmpeg conversion failed for #{input_file}"
-      end
-      @logger.info("Conversion successful: #{output_file}")
-      output_file
-    rescue => e
-      @logger.error("Conversion failed: #{e.message}")
-      nil
-    end
+  def safe_process(audio_file, spanish_file, english_file)
+    transcribe_then_translate(audio_file_conversions(audio_file), spanish_file, english_file)
+  rescue AudioFile::ConversionError => e
+    log_generic_error(e, 'audio', 'conversion')
+  rescue StandardError => e
+    log_generic_error(e, 'text', 'translation')
   end
 
-  def transcribe_then_translate(file, spanish_file, english_file)
-    begin
-      transcription = transcribe_audio(file)
-    rescue StandardError => err
-      log_generic_error(err, 'text', 'translation')
-    end
-
-    return unless transcription
-
-    # Save Spanish transcription
+  def transcribe_then_translate(audio_file, spanish_file, english_file)
+    transcription = transcribe_audio(audio_file)
     File.write(spanish_file, transcription)
     @logger.info("Saved Spanish transcription to #{spanish_file}")
 
-    if @translate_audio && !File.exist?(english_file)
-      translation = @transcriber.translate_text(transcription)
-      @logger.info("Translation: #{translation}")
-      return unless translation
-      File.write(english_file, translation)
-      @logger.info("Saved English translation to #{english_file}")
+    return unless @translate_audio && !File.exist?(english_file)
+
+    translate(transcription, english_file)
+  end
+
+  def transcriber
+    return @transcriber if @transcriber
+
+    openapikey = ENV.fetch('OPENAI_API_KEY', nil)
+    unless openapikey && !openapikey.empty?
+      raise TranscriberError, 'Please place your OpenAI API key in the environment at OPENAI_API_KEY'
+    end
+
+    @logger.info 'OpenAI API key set'
+    @transcriber = TranscriberOpenAI.new(@logger, openapikey)
+  end
+
+  def audio_file_conversions(file)
+    case file.ext.downcase
+    when '.mp4'
+      audio_file_converter.convert_mp4_to_mp3(file)
+    when '.aac'
+      audio_file_converter.convert_aac_to_wav(file)
+    else
+      file
     end
   end
 
-  def file_properties(file_path)
-    {
-      size_bytes: File.size(file_path),
-      created_at: File.ctime(file_path),
-      path: file_path,
-      filename: File.basename(file_path)
-    }
+  def audio_file_converter
+    @audio_file_converter ||= AudioFile::Converter.new @logger
   end
 
   def transcribe_audio(file)
-    @logger.info("Transcribing #{file}...")
-    properties = file_properties(file)
-    @logger.info("File properties: #{properties.inspect}")
+    @logger.info("Transcribing #{file.path}...")
+    @logger.info("File properties: #{file.properties.inspect}")
 
-    @transcriber.transcribe_audio(file)
+    @transcriber.transcribe_audio(file.path)
+  end
+
+  def translate(transcription, english_file)
+    translation = @transcriber.translate_text(transcription)
+    @logger.info("Translation: #{translation}")
+    return unless translation
+
+    File.write(english_file, translation)
+    @logger.info("Saved English translation to #{english_file}")
   end
 
   def log_generic_error(error, item, action)
@@ -167,8 +134,14 @@ class SpanishTranscriber
   end
 end
 
+class TranscriberError < StandardError
+end
+
 if __FILE__ == $PROGRAM_NAME
+  logger = Logger.new($stdout)
+  logger.level = Logger::DEBUG
+
   # Run transcriber
-  transcriber = SpanishTranscriber.new
+  transcriber = SpanishTranscriber.new project_name: ARGV.shift, logger: logger
   transcriber.transcribe_pending_files
 end

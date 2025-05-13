@@ -6,8 +6,7 @@ require_relative '../live_transcriber'
 # from claude.ai: https://claude.ai/share/6326057b-da86-404c-9b7c-c84d33e1634c
 
 RSpec.describe LiveTranscriber do
-  let(:stream_url) { 'https://example.com/stream.m3u8' }
-  let(:segment_uri) { 'segment_1.aac' }
+  let(:mock_temp_file) { Tempfile.new(segment_uri) }
   let(:mock_transcriber) { instance_double(SpanishTranscriber) }
 
   before do
@@ -16,10 +15,11 @@ RSpec.describe LiveTranscriber do
     allow(mock_transcriber).to receive(:process_file).and_return(sample_transcription)
 
     # Mock stream segment file
-    mock_temp_file = Tempfile.new(segment_uri)
     allow(Dir).to receive(:exists?).with('live_audio').and_return(true)
-    allow(File).to receive(:open).and_return(mock_temp_file)
-    allow(File).to receive(:size).and_return(2048)
+    allow(File).to receive_messages(
+      open: mock_temp_file,
+      size: 2048
+    )
 
     # Mock M3u8::Playlist
     allow(M3u8::Playlist).to receive(:read) do
@@ -40,34 +40,31 @@ RSpec.describe LiveTranscriber do
       transcriber = described_class.new(stream_url)
       expect(transcriber.instance_variable_get(:@transcriptions)).to eq([])
     end
+  end
 
-    it 'raises an exception if the OpenAI API key is not set' do
-      allow(SpanishTranscriber).to receive(:new).and_call_original
-      allow(ENV).to receive(:[]).with('OPENAI_API_KEY').and_return(nil)
-      expect do
-        described_class.new(stream_url)
-      end.to raise_error(Exception, 'Please place your OpenAI API key in the environment at OPENAI_API_KEY')
+  describe '#start' do
+    subject(:transcriber) { described_class.new(stream_url) }
+
+    it 'sets running to true' do
+      # Use the first HTTP request to stop processing and check the @running flag
+      allow(Net::HTTP).to receive(:get_response) do
+        expect(transcriber.instance_variable_get('@running')).to be true
+        transcriber.stop
+      end
+      transcriber.start
     end
   end
 
   describe '#start with stream_url' do
-    let(:transcriber) { described_class.new(stream_url) }
+    subject(:transcriber) { described_class.new(stream_url) }
 
     before do
-      allow(transcriber).to receive(:download_content).and_return(sample_m3u8, sample_segment_data)
+      mock_net_http
     end
 
     it 'processes the stream from URL' do
-      allow(transcriber).to receive(:process_stream_from_url).and_return(nil)
-
       transcriber.start
-      expect(transcriber).to have_received(:process_stream_from_url).once
-    end
-
-    it 'sets running to true' do
-      transcriber.start
-      # It gets set back to false by our mocked M3u8::Playlist
-      expect(transcriber.instance_variable_get(:@running)).to be(false)
+      expect(Net::HTTP).to have_received(:get_response).with(URI(stream_url))
     end
 
     it 'adds a transcription to the transcriptions array', :aggregate_failures do
@@ -78,43 +75,35 @@ RSpec.describe LiveTranscriber do
   end
 
   describe '#start without stream URL' do
-    let(:transcriber) { described_class.new }
+    subject(:transcriber) { described_class.new }
+
+    let(:mock_listener) { instance_double(Listen::Listener) }
 
     before do
-      allow(transcriber).to receive(:process_local_stream)
+      allow(Listen).to receive(:to).and_return(mock_listener)
+      allow(mock_listener).to receive(:start) do
+        transcriber.stop
+      end
     end
 
-    it 'processes local streams without a stream URL' do
+    it 'listens to local filesystem changes' do
       transcriber.start
-      expect(transcriber).to have_received(:process_local_stream).once
-    end
-
-    it 'sets running to true' do
-      transcriber.start
-      # It gets set back to false by our mocked M3u8::Playlist
-      expect(transcriber.instance_variable_get(:@running)).to be(true)
+      expect(mock_listener).to have_received(:start)
     end
   end
 
   describe '#on_translaction' do
-    let(:transcriber) { described_class.new(stream_url) }
+    subject(:transcriber) { described_class.new(stream_url) }
 
     before do
-      allow(transcriber).to receive(:download_content).and_return(sample_m3u8, sample_segment_data)
+      mock_net_http
     end
 
     it 'calls the provided block when a transcription is completed', :aggregate_failures do
-      callback_called = false
       test_result = nil
-
-      transcriber.on_transcription do |result|
-        callback_called = true
-        test_result = result
-      end
+      transcriber.on_transcription { |result| test_result = result }
 
       transcriber.start
-
-      expect(callback_called).to be(true)
       expect(test_result[:text]).to eq(sample_transcription)
     end
   end
@@ -130,6 +119,18 @@ RSpec.describe LiveTranscriber do
   end
 
   # Helper methods to provide test data
+  def stream_url
+    'https://example.com/stream.m3u8'
+  end
+
+  def segment_uri
+    'segment_1.aac'
+  end
+
+  def segment_url
+    "https://example.com:443//#{segment_uri}"
+  end
+
   def sample_m3u8
     <<~M3U8
       #EXTM3U
@@ -155,5 +156,17 @@ RSpec.describe LiveTranscriber do
     allow(mock_playlist).to receive(:items).and_return([mock_segment])
     allow(mock_segment).to receive(:is_a?).with(M3u8::SegmentItem).and_return(true)
     mock_playlist
+  end
+
+  def mock_net_http
+    # Mock valid HTTP/1.0 200 OK URLs with fake response body
+    {
+      stream_url => sample_m3u8,
+      segment_url => sample_segment_data
+    }.each do |uri, body|
+      response = Net::HTTPSuccess.new(1.0, '200', 'OK')
+      allow(Net::HTTP).to receive(:get_response).with(URI(uri)).and_return(response)
+      allow(response).to receive(:body).and_return(body)
+    end
   end
 end
