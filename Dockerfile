@@ -1,5 +1,7 @@
 FROM ruby:3.2-slim
 
+ARG BUNDLER_WITH=development
+
 # Install system dependencies including FFmpeg
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -9,9 +11,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+ENV BUNDLER_WITH=${BUNDLER_WITH}
+
 # Copy Gemfile and install dependencies
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN if [ "${BUNDLER_WITH}" == "production" ] ; then \
+        bundle install --deployment --without development:test ; \
+    else \
+        bundle install ; \
+    fi
 
 # Copy the rest of the application
 COPY . .
