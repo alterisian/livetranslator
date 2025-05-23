@@ -3,19 +3,33 @@
 ########################################################################################################################
 
 variable "namespace" {
-    description = "Namespace for project"
-    default     = "livetranslator"
-}
-
-variable "service_name" {
-  description = "A Docker image-compatible name for the service"
-  type        = string
-  default     = "api"
+  description = "Namespace for project"
+  default     = "livetranslator"
 }
 
 variable "environment" {
-    description = "Environment for deployment"
-    default     = "test"
+  description = "Environment for deployment"
+  default     = "test"
+}
+
+variable "services" {
+  description = "Map of services to deploy"
+  default = {
+    "sinatra" = {
+      service_name   = "sinatra"
+      image          = "jaysphoto/livetranslator:latest"
+      container_port = 4576
+      cpu_units      = 512
+      memory         = 256
+    }
+  }
+  type = map(object({
+    service_name   = string
+    image          = string
+    container_port = number
+    cpu_units      = number # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
+    memory         = number # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
+  }))
 }
 
 
@@ -63,24 +77,6 @@ variable "ecs_task_max_count" {
   type        = number
 }
 
-variable "container_port" {
-  description = "Port of the container"
-  type        = number
-  default     = 4567
-}
-
-variable "cpu_units" {
-  description = "Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)"
-  default     = 256
-  type        = number
-}
-
-variable "memory" {
-  description = "Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)"
-  default     = 128
-  type        = number
-}
-
 
 ########################################################################################################################
 ## EC2 + Autoscaling variables
@@ -112,21 +108,4 @@ variable "retention_in_days" {
   description = "Retention period for Cloudwatch logs"
   default     = 3
   type        = number
-}
-
-########################################################################################################################
-## ECR
-########################################################################################################################
-
-variable "ecs_repository_url" {
-  description   = "Docker repository URL"
-  type          = string
-  default       = "jaysphoto/livetranslator"
-}
-
-
-variable "ecs_image_tag" {
-  description   = "Docker image tag to pull from repository"
-  type          = string
-  default       = "latest"
 }

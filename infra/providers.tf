@@ -6,20 +6,20 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
 
   backend "s3" {
-    bucket = "boquercom-tfstate"
-    key    = "aws/boquercom.tfstate"
-    region = "eu-south-2"
+    bucket  = "boquercom-tfstate"
+    key     = "aws/boquercom.tfstate"
+    region  = "eu-south-2"
     encrypt = false
   }
 }
 
 provider "aws" {
   profile = "bcm_${terraform.workspace}"
-  region = var.region
+  region  = var.region
 }

@@ -10,11 +10,11 @@ data "aws_availability_zones" "available" {}
 
 data "aws_subnets" "public" {
   filter {
-    name = "vpc-id"
+    name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
   filter {
-    name = "map-public-ip-on-launch"
-    values  = ["true"]
+    name   = "map-public-ip-on-launch"
+    values = ["true"]
   }
 }

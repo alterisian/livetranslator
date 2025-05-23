@@ -3,11 +3,11 @@
 ########################################################################################################################
 
 locals {
-  name  = "${var.namespace}_EC2_ASG_${var.environment}"
-  tags  = {
-    Name = "${local.name}",
+  name = "${var.namespace}_EC2_ASG_${var.environment}"
+  tags = {
+    Name             = "${local.name}",
     AmazonECSManaged = "true"
- }
+  }
 }
 
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux
@@ -33,11 +33,11 @@ resource "aws_ecs_capacity_provider" "ec2" {
   name = "${var.namespace}_ECS_Capacity_Provider_${var.environment}"
 
   auto_scaling_group_provider {
-    auto_scaling_group_arn          = aws_autoscaling_group.default.arn
-    managed_termination_protection  = "DISABLED"
+    auto_scaling_group_arn         = aws_autoscaling_group.default.arn
+    managed_termination_protection = "DISABLED"
 
     managed_scaling {
-      status                    = "ENABLED"
+      status = "ENABLED"
 
       target_capacity           = 1
       minimum_scaling_step_size = 1
@@ -52,13 +52,12 @@ resource "aws_ecs_capacity_provider" "ec2" {
 ########################################################################################################################
 
 resource "aws_launch_template" "default" {
-  name_prefix   = "${var.namespace}_LT_${var.environment}"
+  name_prefix = "${var.namespace}_LT_${var.environment}"
 
   image_id      = jsondecode(data.aws_ssm_parameter.ecs_optimized_ami.value)["image_id"]
   instance_type = var.instance_type
- 
-  # vpc_security_group_ids = [aws_security_group.ecs_container_instance.id]
-  user_data              = base64encode(<<-EOT
+
+  user_data = base64encode(<<-EOT
     #!/bin/bash
     cat <<'EOF' >> /etc/ecs/ecs.config
     ECS_CLUSTER=${var.namespace}_ECSCluster_${var.environment}
@@ -77,15 +76,14 @@ resource "aws_launch_template" "default" {
     }
   }
 
-  vpc_security_group_ids = [aws_security_group.aws_ec2_instance.id]
-
   network_interfaces {
     associate_public_ip_address = true
+    security_groups             = [aws_security_group.aws_ec2_instance.id]
   }
 
   tag_specifications {
     resource_type = "instance"
-    tags = local.tags
+    tags          = local.tags
   }
 
   iam_instance_profile {
@@ -118,10 +116,10 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerServiceforEC2Role" {
-  role        = aws_iam_role.default.name
-  policy_arn  = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+  role       = aws_iam_role.default.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 resource "aws_iam_role_policy_attachment" "AmazonSSMManagedInstanceCore" {
-  role        = aws_iam_role.default.name
-  policy_arn  = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.default.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
