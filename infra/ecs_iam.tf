@@ -23,6 +23,13 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy_document" "task_assume_ssm_policy" {
+  statement {
+    actions   = ["ssm:GetParameters"]
+    resources = [data.aws_ssm_parameter.openai_api_key.arn]
+  }
+}
+
 ########################################################################################################################
 ## IAM Role for ECS Task
 ########################################################################################################################

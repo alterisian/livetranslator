@@ -16,19 +16,29 @@ variable "services" {
   description = "Map of services to deploy"
   default = {
     "sinatra" = {
-      service_name   = "sinatra"
-      image          = "jaysphoto/livetranslator:latest"
-      container_port = 4576
-      cpu_units      = 512
-      memory         = 256
+      service_name    = "sinatra"
+      image           = "jaysphoto/livetranslator:latest"
+      container_ports = [4567]
+      cpu_units       = 512
+      memory          = 256
+      command         = ["ruby", "app.rb"]
+    },
+    "transcriber" = {
+      service_name    = "transcriber"
+      image           = "jaysphoto/livetranslator:latest"
+      container_ports = []
+      cpu_units       = 512
+      memory          = 256
+      command         = ["ruby", "live_transcriber.rb"]
     }
   }
   type = map(object({
-    service_name   = string
-    image          = string
-    container_port = number
-    cpu_units      = number # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
-    memory         = number # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
+    service_name    = string
+    image           = string
+    container_ports = list(number) # List of container ports to expose
+    cpu_units       = number       # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
+    memory          = number       # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
+    command         = list(string)
   }))
 }
 

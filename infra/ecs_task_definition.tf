@@ -18,10 +18,11 @@ resource "aws_ecs_task_definition" "task" {
       essential = true
       memory    = each.value.memory
       cpu       = each.value.cpu_units
-      portMappings = [
+      command   = each.value.command
+      portMappings = [for port in each.value.container_ports :
         {
-          hostPort      = each.value.container_port
-          containerPort = each.value.container_port
+          hostPort      = port
+          containerPort = port
           protocol      = "tcp"
         }
       ]
@@ -33,6 +34,9 @@ resource "aws_ecs_task_definition" "task" {
           "awslogs-stream-prefix" = "${each.value.service_name}-log-stream"
         }
       }
+      environment = [
+        { name = "OPENAI_API_KEY", value = data.aws_ssm_parameter.openai_api_key.value }
+      ]
       mountPoints = [
         {
           sourceVolume  = "live-audio"
