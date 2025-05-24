@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebRTC Audio Capture Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      color: #333366;
+    }
+    button#startButton {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    p#statusMessage {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebRTC Audio Capture Test</h1>
+  <button id="startButton">Start Audio Capture</button>
+  <p id="statusMessage"></p>
+
+  <script>
+    const startButton = document.getElementById('startButton');
+    const statusMessage = document.getElementById('statusMessage');
+
+    startButton.addEventListener('click', () => {
+      statusMessage.textContent = 'Requesting microphone permission...';
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusMessage.textContent = 'WebRTC is not supported in this browser.';
+        return;
+      }
+
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(stream => {
+          statusMessage.textContent = 'Microphone access granted. Audio capture started.';
+          console.log('Audio capture started');
+          startButton.disabled = true; // Optional: Disable button after successful start
+        })
+        .catch(err => {
+          statusMessage.textContent = 'Microphone access denied. Please enable microphone permissions in your browser settings to use this feature.';
+          console.error('Error accessing microphone:', err);
+        });
+    });
+  </script>
+</body>
+</html>
