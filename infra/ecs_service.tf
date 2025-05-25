@@ -8,7 +8,7 @@ resource "aws_ecs_service" "default" {
   desired_count   = 1
   task_definition = aws_ecs_task_definition.default.arn
 
-  depends_on      = [ aws_ecs_task_definition.default ]
+  depends_on = [aws_ecs_task_definition.default]
 
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0

@@ -13,10 +13,10 @@ resource "aws_ecs_task_definition" "default" {
     {
       name      = s.service_name,
       image     = s.image,
-      essential = try(s.essential, true)
+      essential = s.essential
       memory    = s.memory
       cpu       = s.cpu_units
-      command   = try(s.command, null)
+      command   = s.command
       portMappings = [for port in s.container_ports :
         {
           hostPort      = port

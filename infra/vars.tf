@@ -33,11 +33,11 @@ variable "services" {
     "livestream" = {
       service_name    = "livestream"
       image           = "jaysphoto/nginx-rtmp:latest"
-      container_ports = [1935]  # tcp/1935: RTMP endpoint for live streaming
-      cpu_units       = 1024    # 1 vCPU
+      container_ports = [1935] # tcp/1935: RTMP endpoint for live streaming
+      cpu_units       = 1024   # 1 vCPU
       memory          = 128
-      essential       = false   # Not essential for the task, can be stopped if needed
-      mount_points    = [       # Custom mount point for the livestream container
+      essential       = false # Not essential for the task, can be stopped if needed
+      mount_points = [        # Custom mount point for the livestream container
         {
           sourceVolume  = "live-audio"
           containerPath = "/opt/data/live_audio"
@@ -49,28 +49,28 @@ variable "services" {
   type = map(object({
     service_name    = string
     image           = string
-    container_ports = list(number)    # List of container ports to expose
-    essential       = optional(bool)  # Whether the container is essential for the task
-    cpu_units       = number          # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
-    memory          = number          # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
+    container_ports = list(number)         # List of container ports to expose
+    essential       = optional(bool, true) # Whether the container is essential for the task
+    cpu_units       = number               # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
+    memory          = number               # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
     command         = optional(list(string), null)
-    mount_points    = optional(list(object({
-                        sourceVolume  = string
-                        containerPath = string
-                        readOnly      = bool
-                      })),
-                      [
-                        {
-                          sourceVolume  = "live-audio"
-                          containerPath = "/app/live_audio"
-                          readOnly      = false
-                        },
-                        {
-                          sourceVolume  = "live-text"
-                          containerPath = "/app/live_text"
-                          readOnly      = false
-                        }
-                      ])
+    mount_points = optional(
+      list(object({
+        sourceVolume  = string
+        containerPath = string
+        readOnly      = bool
+      })),
+      [{
+        sourceVolume  = "live-audio"
+        containerPath = "/app/live_audio"
+        readOnly      = false
+        },
+        {
+          sourceVolume  = "live-text"
+          containerPath = "/app/live_text"
+          readOnly      = false
+      }]
+    )
   }))
 }
 
@@ -133,12 +133,6 @@ variable "iam_role_name" {
   description = "IAM role name for EC2 instance"
   default     = "ecs_instance_role"
   type        = string
-}
-
-variable "host_port" {
-  description = "Public port of the EC2 instance"
-  default     = 4567
-  type        = number
 }
 
 
