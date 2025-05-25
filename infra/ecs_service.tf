@@ -2,13 +2,13 @@
 ## Creates ECS Service
 ########################################################################################################################
 
-resource "aws_ecs_service" "service" {
-  for_each = var.services
-
-  name            = each.key
+resource "aws_ecs_service" "default" {
+  name            = "${var.namespace}_ECSTask_${var.environment}"
   cluster         = aws_ecs_cluster.default.id
   desired_count   = 1
-  task_definition = aws_ecs_task_definition.task[each.key].arn
+  task_definition = aws_ecs_task_definition.default.arn
+
+  depends_on      = [ aws_ecs_task_definition.default ]
 
   deployment_maximum_percent         = 100
   deployment_minimum_healthy_percent = 0

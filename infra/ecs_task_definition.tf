@@ -2,24 +2,22 @@
 ## Creates ECS Task Definition
 ########################################################################################################################
 
-resource "aws_ecs_task_definition" "task" {
-  for_each = var.services
-
+resource "aws_ecs_task_definition" "default" {
   family                   = "service"
   network_mode             = "host" # Use 'awsvpc' to use ENI and apply task security group
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   requires_compatibilities = ["EC2"]
   # memory                   = 512 -- optional, use in case of Fargate
 
-  container_definitions = jsonencode([
+  container_definitions = jsonencode([for s in var.services :
     {
-      name      = each.value.service_name,
-      image     = each.value.image,
-      essential = true
-      memory    = each.value.memory
-      cpu       = each.value.cpu_units
-      command   = each.value.command
-      portMappings = [for port in each.value.container_ports :
+      name      = s.service_name,
+      image     = s.image,
+      essential = try(s.essential, true)
+      memory    = s.memory
+      cpu       = s.cpu_units
+      command   = try(s.command, null)
+      portMappings = [for port in s.container_ports :
         {
           hostPort      = port
           containerPort = port
@@ -31,13 +29,14 @@ resource "aws_ecs_task_definition" "task" {
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.log_group.name
           "awslogs-region"        = var.region
-          "awslogs-stream-prefix" = "${each.value.service_name}-log-stream"
+          "awslogs-stream-prefix" = "log-stream"
         }
       }
       environment = [
-        { name = "OPENAI_API_KEY", value = data.aws_ssm_parameter.openai_api_key.value }
+        { name = "OPENAI_API_KEY", value = data.aws_ssm_parameter.openai_api_key.value },
+        { name = "STREAM_KEY_NAME", value = data.aws_ssm_parameter.stream_key_name.value }
       ]
-      mountPoints = [
+      mountPoints = try(s.mount_points, [
         {
           sourceVolume  = "live-audio"
           containerPath = "/app/live-audio"
@@ -48,7 +47,7 @@ resource "aws_ecs_task_definition" "task" {
           containerPath = "/app/live-text"
           readOnly      = false
         }
-      ]
+      ])
     }
   ])
 
