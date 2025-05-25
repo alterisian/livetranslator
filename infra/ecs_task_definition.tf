@@ -36,18 +36,7 @@ resource "aws_ecs_task_definition" "default" {
         { name = "OPENAI_API_KEY", value = data.aws_ssm_parameter.openai_api_key.value },
         { name = "STREAM_KEY_NAME", value = data.aws_ssm_parameter.stream_key_name.value }
       ]
-      mountPoints = try(s.mount_points, [
-        {
-          sourceVolume  = "live-audio"
-          containerPath = "/app/live-audio"
-          readOnly      = false
-        },
-        {
-          sourceVolume  = "live-text"
-          containerPath = "/app/live-text"
-          readOnly      = false
-        }
-      ])
+      mountPoints = s.mount_points
     }
   ])
 

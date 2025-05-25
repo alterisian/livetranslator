@@ -15,7 +15,7 @@ ENV BUNDLER_WITH=${BUNDLER_WITH}
 
 # Copy Gemfile and install dependencies
 COPY Gemfile Gemfile.lock ./
-RUN if [ "${BUNDLER_WITH}" == "production" ] ; then \
+RUN if [[ "${BUNDLER_WITH}" == "production" ]] ; then \
         bundle install --deployment --without development:test ; \
     else \
         bundle install ; \
@@ -32,5 +32,5 @@ ENV APP_ENV=production
 ENV AUDIO_DIR=/app/live_audio
 ENV TRANSCRIPT_DIR=/app/live_text
 
-# Entrypoint and command to run the web application
+# Command to run the web application
 CMD ["ruby", "app.rb"]

@@ -21,7 +21,6 @@ variable "services" {
       container_ports = [4567]
       cpu_units       = 256
       memory          = 128
-      command         = ["ruby", "app.rb"]
     },
     "transcriber" = {
       service_name    = "transcriber"
@@ -54,12 +53,24 @@ variable "services" {
     essential       = optional(bool)  # Whether the container is essential for the task
     cpu_units       = number          # Amount of CPU units for a single ECS task (256 CPU units = 0.25 vCPU)
     memory          = number          # Amount of memory in MB for a single ECS task (512 MiB, 1 GB or 2 GB for 0.25 vCPU)
-    command         = optional(list(string))
-    mount_points  = optional(list(object({
-      sourceVolume  = string
-      containerPath = string
-      readOnly      = bool
-    })))
+    command         = optional(list(string), null)
+    mount_points    = optional(list(object({
+                        sourceVolume  = string
+                        containerPath = string
+                        readOnly      = bool
+                      })),
+                      [
+                        {
+                          sourceVolume  = "live-audio"
+                          containerPath = "/app/live_audio"
+                          readOnly      = false
+                        },
+                        {
+                          sourceVolume  = "live-text"
+                          containerPath = "/app/live_text"
+                          readOnly      = false
+                        }
+                      ])
   }))
 }
 
