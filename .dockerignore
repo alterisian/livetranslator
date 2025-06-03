@@ -3,6 +3,11 @@
 .gitignore
 audio/*
 transcripts/*
+infra/*
+live_audio/*
+live_text/*
+text/*
+*.aac
 *.mp3
 *.mp4
 *.wav
