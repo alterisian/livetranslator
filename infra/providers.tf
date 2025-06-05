@@ -14,8 +14,6 @@ terraform {
   backend "s3" {
     bucket  = "boquercom-tfstate"
     key     = "aws/boquercom.tfstate"
-    region  = "eu-south-2"
-    encrypt = false
   }
 }
 
